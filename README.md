@@ -1,25 +1,15 @@
-Installation
-------------
-You may need to change the port by hand if your USB-TTL adapter comes up as
-something different than /dev/ttyUSB0 (*hint*Windows COM ports*hint*).
+# mobileKVM
 
-    virtualenv .
-    . bin/activate
-    # didn't work for me
-    #pip install pygame --allow-external pygame --allow-unverified pygame
-    # worked
-    pip install hg+http://bitbucket.org/pygame/pygame
+mobileKVM lets you grab a Video signal from a headless server, with i.g. a Laptop and send keyboard inputs from said laptop to the Server over USB.
 
+If you have devices in a Network which you dont control and want to debug the devices without carrying a Monitor and Keyboard around, mobileKVM might be for you
 
-Usage
------
+This project started as a Fork of [makefu/keyboard-passthrough](https://github.com/makefu/keyboard-passthrough)
 
-    python here.py
-
-Now type in the black window, every keystroke should be mapped and forwarded,
-modifier keys like ctrl, alt and the window key should be working.
-
-Links
------
-For the complete description of the remote management stack, see: 
-http://euer.krebsco.de/a-software-kvm-switch/
+## Structure
+- Cheap USB HDMI grabber
+- USB TTL adapter (key inputs --> Arduino)
+- [Arduino Pro Micro disguised as a keyboard](/Arduino) (key inputs --> headless device)
+- USB-HUB chip 
+- [3D Printed Case](CAD)
+- [Python script](/python) running pygame to display video and grab keyboard inputs (inlc. compiled version)
