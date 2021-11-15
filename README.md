@@ -7,9 +7,9 @@ If you have devices in a Network which you dont control and want to debug the de
 This project started as a Fork of [makefu/keyboard-passthrough](https://github.com/makefu/keyboard-passthrough)
 
 ## Structure
-- [Cheap USB HDMI grabber](grabber.jpeg)
+- [Cheap USB HDMI grabber](/docs/images/grabber.jpeg)
 - CP2104 USB TTL adapter (key inputs --> Arduino)
 - [Seeeduino XIAO disguised as a keyboard](/Xiao) (key inputs --> headless device)
-- [USB-HUB chip ](hub.jpeg)
+- [USB-HUB chip ](/docs/images/hub.jpeg)
 - [3D Printed Case](/CAD)
 - [Python script](/python) running pygame to display video and grab keyboard inputs (inlc. compiled version)
