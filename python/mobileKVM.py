@@ -296,7 +296,6 @@ def main( camlist):
             print(e)
         events = pygame.event.get()
         for event in events:
-            # print(event)
             if event.type == pygame.QUIT:
                 exit()
             elif event.type==VIDEORESIZE:
@@ -320,7 +319,6 @@ def main( camlist):
                 pygame.display.flip()
                 # print(cap.get_size())
             elif event.type in (pygame.KEYUP ,pygame.KEYDOWN):
-                    print(event.key,event.unicode)
                     if event.type == pygame.KEYUP:
                         press=False
                     else:
@@ -332,7 +330,6 @@ def main( camlist):
                             py_map[event.key],key))
                     else:
                         key=event.key
-                    # print("{} {}".format("pressed" if press else "released",key))
                     layoutNum=keyLayouts.index(activeKeyLayout)+2
                     if ser.is_open:
                         ser.write(pack("!BB",1 if press else 0,key))
