@@ -23,6 +23,7 @@ myfont = pygame.font.SysFont('Tahoma', 50)
 start = time.time()
 
 ser = serial.Serial()
+mouseEnabled = False
 
 def getSerial():
     serials=[]
@@ -142,6 +143,7 @@ def draw_background(cap, surface,scr_size):
         except Exception as e: 
             # print(e)
             surface.fill([0,0,0])
+
     
 
 
@@ -162,8 +164,14 @@ def returnCameraIndexes():
         i -= 1
     # return arr
 
-def genrateUI(manager,scr_size,serials,activeSerial,resolution,activeVideoIn, showSettings,camlist,keyLayouts, activeKeyLayout):
+def genrateUI():
     resolutions = ['640x480','800x600','1024x768','1280x960','1920x1080']
+    # global mouseEnabled 
+    global settings_button
+    global manager,scr_size,serials,activeSerial,resolution,videoIn, showSettings,camlist,keyLayouts, activeKeyLayout
+    global mouse_toggle, resolution_text, resolution_dropdown, videoIn_text, videoIn_dropdown, serial_text, serial_dropdown, keylayout_text, keylayout_dropdown
+    manager.clear_and_reset()
+
     # activeSerial = serials[0]
     res = scale_screen(scr_size)
     activeResolution=str(res[0])+'x'+str(res[1])
@@ -172,6 +180,10 @@ def genrateUI(manager,scr_size,serials,activeSerial,resolution,activeVideoIn, sh
     i=0
     settings_button = pygame_gui.elements.UIButton(pygame.Rect(scr_size[0]-elment_x-30, i*elment_y, elment_x, elment_y),
                                             text='Settings',
+                                            manager=manager)
+    i+=1
+    mouse_toggle = pygame_gui.elements.UIButton(pygame.Rect(scr_size[0]-elment_x-15, i*elment_y, elment_x, elment_y),
+                                            text= "Enable Mouse" if  mouseEnabled==False else "Disable Mouse",
                                             manager=manager)
     i+=1
     resolution_text = pygame_gui.elements.ui_text_box.UITextBox("Resolution:",
@@ -188,7 +200,7 @@ def genrateUI(manager,scr_size,serials,activeSerial,resolution,activeVideoIn, sh
                                             manager=manager)
     i+=1
     videoIn_dropdown = pygame_gui.elements.UIDropDownMenu(options_list=camlist,
-                                                    starting_option=activeVideoIn,
+                                                    starting_option=videoIn,
                                                     relative_rect=pygame.Rect(scr_size[0]-elment_x, i*elment_y, elment_x, elment_y),
                                                     manager=manager)   
     i+=1
@@ -211,6 +223,7 @@ def genrateUI(manager,scr_size,serials,activeSerial,resolution,activeVideoIn, sh
                                                     manager=manager)   
     i+=1
     if not showSettings:
+        mouse_toggle.hide()
         resolution_dropdown.hide()
         resolution_text.hide()
         videoIn_dropdown.hide()
@@ -220,6 +233,7 @@ def genrateUI(manager,scr_size,serials,activeSerial,resolution,activeVideoIn, sh
         keylayout_dropdown.hide()
         keylayout_text.hide()
     else:
+        mouse_toggle.show()
         resolution_dropdown.show()
         resolution_text.show()
         videoIn_dropdown.show()
@@ -228,13 +242,17 @@ def genrateUI(manager,scr_size,serials,activeSerial,resolution,activeVideoIn, sh
         serial_text.show()
         keylayout_dropdown.show()
         keylayout_text.show()
-    return settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text
+    return
+    # return settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text
 
 def scale_screen(size):
     return tuple(int(scaleFactor*x) for x in size)
 
 
-def main( camlist):
+def main():
+    global mouseEnabled 
+    global manager,scr_size,serials,activeSerial,resolution,videoIn, showSettings,camlist,keyLayouts, activeKeyLayout
+    global mouse_toggle, resolution_text, resolution_dropdown, videoIn_text, videoIn_dropdown, serial_text, serial_dropdown, keylayout_text, keylayout_dropdown
     # resolutions = ['1280x960','1920x1080','640x480','800x600','1024x768']
     try:
         videoIn=camlist[-2]
@@ -282,9 +300,10 @@ def main( camlist):
             cap.start()
         except Exception as e: print(e)
 
-
+    # genrateUI(manager,scr_size,serials,activeSerial,resolution,activeVideoIn, showSettings,camlist,keyLayouts, activeKeyLayout)
     showSettings = False
-    settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = genrateUI(manager,scr_size,serials,activeSerial,resolution,videoIn,showSettings,camlist,keyLayouts,activeKeyLayout)
+    # settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = genrateUI(manager,scr_size,serials,activeSerial,resolution,videoIn,showSettings,camlist,keyLayouts,activeKeyLayout)
+    genrateUI()
     clock = pygame.time.Clock()
 
     while True:
@@ -296,14 +315,26 @@ def main( camlist):
             print(e)
         events = pygame.event.get()
         for event in events:
+            # print(event.type)
             if event.type == pygame.QUIT:
                 exit()
+            # 1 - left click
+            # 2 - middle click
+            # 3 - right click
+            # 4 - scroll up
+            # 5 - scroll down
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                print("mouse pressed", event.button, pos)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                pos = pygame.mouse.get_pos()
+                print("mouse pressed", event.button, pos)
             elif event.type==VIDEORESIZE:
                 scr_size=tuple(event.dict['size'])
                 surface=pygame.display.set_mode(event.dict['size'],HWSURFACE|DOUBLEBUF|RESIZABLE)
                 manager.set_window_resolution(event.dict['size'])
-                manager.clear_and_reset()
-                settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text,keylayout_dropdown, keylayout_text = genrateUI(manager,scr_size,serials,activeSerial,resolution,videoIn,showSettings,camlist,keyLayouts,activeKeyLayout)
+                # settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text,keylayout_dropdown, keylayout_text = 
+                genrateUI()
                 
                 ##### CV2 - deprecated
                 if cv:
@@ -339,6 +370,7 @@ def main( camlist):
                     if event.ui_element == settings_button:
                         showSettings = not showSettings
                         if not showSettings:
+                            mouse_toggle.hide()
                             resolution_dropdown.hide()
                             resolution_text.hide()
                             videoIn_dropdown.hide()
@@ -348,6 +380,7 @@ def main( camlist):
                             keylayout_dropdown.hide()
                             keylayout_text.hide()
                         else:
+                            mouse_toggle.show()
                             resolution_dropdown.show()
                             resolution_text.show()
                             videoIn_dropdown.show()
@@ -357,6 +390,14 @@ def main( camlist):
                             keylayout_dropdown.show()
                             keylayout_text.show()
                         # print(event.ui_element)
+                    if event.ui_element == mouse_toggle:
+                        print(mouseEnabled)
+                        mouseEnabled = not mouseEnabled
+                        mouse_toggle.text= "Enable Mouse" if  mouseEnabled==False else "Disable Mouse"
+                        # manager.draw_ui(surface)
+                        
+                        genrateUI()
+
                 if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     # print(event.ui_element)
                     if event.ui_element == resolution_dropdown:
@@ -372,8 +413,8 @@ def main( camlist):
                             # print(camlist)
                             # videoIns=list(range(0,len(camlist)))
                             camlist.append('refresh')
-                            manager.clear_and_reset()
-                            settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = genrateUI(manager,scr_size,serials,activeSerial,resolution,videoIn,showSettings,camlist,keyLayouts,activeKeyLayout)
+                            # settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = 
+                            genrateUI()
                         else:
                             videoIn=event.text
                             cID = [i for i,x in enumerate(camlist) if x == event.text][0]
@@ -406,23 +447,23 @@ def main( camlist):
                             except:
                                 continue
                             # serials.append('refresh')
-                            manager.clear_and_reset()
-                            settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = genrateUI(manager,scr_size,serials,activeSerial,resolution,videoIn,showSettings,camlist,keyLayouts,activeKeyLayout)
+                            # settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = 
+                            genrateUI()
                         else:
                             try:
                                 ser = serial.Serial(event.text, 9600)
                             except:
                                 serials=getSerial()
                                 # serials.append('refresh')
-                                manager.clear_and_reset()
-                                settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = genrateUI(manager,scr_size,serials,activeSerial,resolution,videoIn,showSettings,camlist,keyLayouts,activeKeyLayout)
+                                # settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = 
+                                genrateUI()
                     if event.ui_element == keylayout_dropdown:
                         layoutNum=keyLayouts.index(activeKeyLayout)+2
                         if ser.is_open:
                             ser.write(pack("!BB",0,layoutNum))
                             activeKeyLayout = event.text
-                        manager.clear_and_reset()
-                        settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = genrateUI(manager,scr_size,serials,activeSerial,resolution,videoIn,showSettings,camlist,keyLayouts,activeKeyLayout)
+                        # settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = 
+                        genrateUI()
 
 
                     
@@ -438,5 +479,5 @@ camlist = pygame.camera.list_cameras()
 
 camlist.append('refresh')
 if __name__ == "__main__":
-    main(camlist)
+    main()
 
