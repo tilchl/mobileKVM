@@ -331,7 +331,7 @@ def main( camlist):
                     else:
                         key=event.key
                     layoutNum=keyLayouts.index(activeKeyLayout)+2
-                    if ser.is_open:
+                    if ser.is_open and key < 256:
                         ser.write(pack("!BB",1 if press else 0,key))
                     #print(ser.readlines())
             elif event.type == pygame.USEREVENT:
