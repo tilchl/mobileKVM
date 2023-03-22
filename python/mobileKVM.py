@@ -15,7 +15,9 @@ import ctypes
 
 cv = 0
 
-scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+# scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+scaleFactor = 1
+
 pygame.font.init()
 
 myfont = pygame.font.SysFont('Tahoma', 50)
