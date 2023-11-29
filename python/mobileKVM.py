@@ -34,7 +34,7 @@ def getSerial():
         # print(info.pid)
         if info.pid != None:
             try:
-                seri = serial.Serial(info.device, 9600)
+                seri = serial.Serial(info.device, 9600) # try 115200
                 serials.append(info.device)
                 seri.close()
             except:
@@ -187,15 +187,15 @@ def genrateUI():
     mouse_toggle = pygame_gui.elements.UIButton(pygame.Rect(scr_size[0]-elment_x-15, i*elment_y, elment_x, elment_y),
                                             text= "Enable Mouse" if  mouseEnabled==False else "Disable Mouse",
                                             manager=manager)
-    i+=1
-    resolution_text = pygame_gui.elements.ui_text_box.UITextBox("Resolution:",
-                                            relative_rect=pygame.Rect(scr_size[0]-elment_x-15, i*elment_y, elment_x, elment_y),
-                                            manager=manager)
-    i+=1
-    resolution_dropdown = pygame_gui.elements.UIDropDownMenu(options_list=resolutions,
-                                                        starting_option=activeResolution,
-                                                        relative_rect=pygame.Rect(scr_size[0]-elment_x, i*elment_y, elment_x, elment_y),
-                                                        manager=manager)            
+    # i+=1
+    # resolution_text = pygame_gui.elements.ui_text_box.UITextBox("Resolution:",
+    #                                         relative_rect=pygame.Rect(scr_size[0]-elment_x-15, i*elment_y, elment_x, elment_y),
+    #                                         manager=manager)
+    # i+=1
+    # resolution_dropdown = pygame_gui.elements.UIDropDownMenu(options_list=resolutions,
+    #                                                     starting_option=activeResolution,
+    #                                                     relative_rect=pygame.Rect(scr_size[0]-elment_x, i*elment_y, elment_x, elment_y),
+    #                                                     manager=manager)            
     i+=1
     videoIn_text = pygame_gui.elements.ui_text_box.UITextBox("VideoIn:",
                                             relative_rect=pygame.Rect(scr_size[0]-elment_x-15, i*elment_y, elment_x, elment_y),
@@ -226,8 +226,8 @@ def genrateUI():
     i+=1
     if not showSettings:
         mouse_toggle.hide()
-        resolution_dropdown.hide()
-        resolution_text.hide()
+        # resolution_dropdown.hide()
+        # resolution_text.hide()
         videoIn_dropdown.hide()
         videoIn_text.hide()
         serial_dropdown.hide()
@@ -236,8 +236,8 @@ def genrateUI():
         keylayout_text.hide()
     else:
         mouse_toggle.show()
-        resolution_dropdown.show()
-        resolution_text.show()
+        # resolution_dropdown.show()
+        # resolution_text.show()
         videoIn_dropdown.show()
         videoIn_text.show()
         serial_dropdown.show()
@@ -259,7 +259,7 @@ def main():
     try:
         videoIn=camlist[-2]
     except:
-        videoIn="not availible"
+        videoIn="refresh"
     ser_connected = False
     serials=getSerial()
     if len(serials) > 1:
@@ -274,7 +274,7 @@ def main():
     scr_size = (round(pygame.display.Info().current_w*0.8),round(pygame.display.Info().current_h*0.8))
     # scr_size = (1280,960)
     resolution=str(scr_size[0])+'x'+str(scr_size[1])
-    pygame.display.set_caption("mobileKVM")
+    pygame.display.set_caption("mobileKVM press ctrl + g to free mouse")
     # pygame.display.set_icon(0)
     surface = pygame.display.set_mode(scr_size,HWSURFACE|DOUBLEBUF|RESIZABLE)
     manager = pygame_gui.UIManager(scr_size)
@@ -308,6 +308,14 @@ def main():
     genrateUI()
     clock = pygame.time.Clock()
 
+    # # Hide the cursor°
+    # pygame.mouse.set_visible(False)
+
+    # # Grab the mouse
+    # pygame.event.set_grab(True)
+
+    mouseEnabled = False
+
     while True:
         time_delta = clock.tick(60)/1000.0
         surface.fill([0,0,0])
@@ -325,12 +333,12 @@ def main():
             # 3 - right click
             # 4 - scroll up
             # 5 - scroll down
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-                print("mouse pressed", event.button, pos)
-            elif event.type == pygame.MOUSEBUTTONUP:
-                pos = pygame.mouse.get_pos()
-                print("mouse pressed", event.button, pos)
+            # elif event.type == pygame.MOUSEBUTTONDOWN:
+            #     pos = pygame.mouse.get_pos()
+            #     print("mouse pressed", event.button, pos)
+            # elif event.type == pygame.MOUSEBUTTONUP:
+            #     pos = pygame.mouse.get_pos()
+            #     print("mouse pressed", event.button, pos)
             elif event.type==VIDEORESIZE:
                 scr_size=tuple(event.dict['size'])
                 surface=pygame.display.set_mode(event.dict['size'],HWSURFACE|DOUBLEBUF|RESIZABLE)
@@ -351,30 +359,74 @@ def main():
                     cap.start()
                 pygame.display.flip()
                 # print(cap.get_size())
-            elif event.type in (pygame.KEYUP ,pygame.KEYDOWN):
-                    if event.type == pygame.KEYUP:
-                        press=False
-                    else:
-                        press=True
+                            
+                    
+            elif mouseEnabled and event.type == MOUSEMOTION:
+                # Print mouse movement
+                x, y = event.rel
+                print("Mouse movement: ", event.rel)
+                if ser.is_open and mouseEnabled:
+                    if x < -128:
+                        x = -128
+                    if x > 127:
+                        x = 127
+                    if y < -128:
+                        y = -128
+                    if y > 127:
+                        y = 127
+                    ser.write(pack("!Bbb", 2, x, y))  # Command 2 for mouse movement, followed by x and y
 
-                    if event.key in py_map:
-                        key=orig_map[py_map[event.key]]
-                        print("{} mapped to {} ({})".format(event.key,
-                            py_map[event.key],key))
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                print("Mouse pressed", event.button, pos)
+                if ser.is_open and mouseEnabled:
+                    if event.button == 1:  # Left mouse button
+                        ser.write(pack("!BBB", 3, 1, 0))  # Command 3 for mouse press, 1 for left click
+                    elif event.button == 3:  # Right mouse button
+                        ser.write(pack("!BBB", 3, 2, 0))  # Command 3 for mouse press, 2 for right click
+                    elif event.button == 2:  # Middle mouse button
+                        ser.write(pack("!BBB", 3, 3, 0))  # Command 3 for mouse press, 3 for middle click
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                pos = pygame.mouse.get_pos()
+                print("Mouse released", event.button, pos)
+                if ser.is_open and mouseEnabled:
+                    if event.button == 1:  # Left mouse button
+                        ser.write(pack("!BBB", 4, 1, 0))  # Command 4 for mouse release, 1 for left click
+                    elif event.button == 3:  # Right mouse button
+                        ser.write(pack("!BBB", 4, 2, 0))  # Command 4 for mouse release, 2 for right click
+                    elif event.button == 2:  # Middle mouse button
+                        ser.write(pack("!BBB", 4, 3, 0))  # Command 4 for mouse release, 3 for middle click
+
+            elif event.type in (pygame.KEYUP ,pygame.KEYDOWN):
+                    if event.key == K_g and (pygame.key.get_mods() & KMOD_CTRL) and event.type == KEYDOWN:
+                        pygame.event.set_grab(not pygame.event.get_grab())
+                        pygame.mouse.set_visible(not pygame.mouse.get_visible())
+                        mouseEnabled = not mouseEnabled
                     else:
-                        key=event.key
-                    layoutNum=keyLayouts.index(activeKeyLayout)+2
-                    if ser.is_open and key < 256:
-                        ser.write(pack("!BB",1 if press else 0,key))
-                    #print(ser.readlines())
+                        if event.type == pygame.KEYUP:
+                            press=False
+                        else:
+                            press=True
+
+                        if event.key in py_map:
+                            key=orig_map[py_map[event.key]]
+                            print("{} mapped to {} ({})".format(event.key,
+                                py_map[event.key],key))
+                        else:
+                            key=event.key
+                        layoutNum=keyLayouts.index(activeKeyLayout)+2
+                        if ser.is_open and key < 256:
+                            ser.write(pack("!BBB", 0 if press else 1, key, 0))  # First byte for keyboard command
+                        #print(ser.readlines())
             elif event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == settings_button:
                         showSettings = not showSettings
                         if not showSettings:
                             mouse_toggle.hide()
-                            resolution_dropdown.hide()
-                            resolution_text.hide()
+                            # resolution_dropdown.hide()
+                            # resolution_text.hide()
                             videoIn_dropdown.hide()
                             videoIn_text.hide()
                             serial_dropdown.hide()
@@ -383,8 +435,8 @@ def main():
                             keylayout_text.hide()
                         else:
                             mouse_toggle.show()
-                            resolution_dropdown.show()
-                            resolution_text.show()
+                            # resolution_dropdown.show()
+                            # resolution_text.show()
                             videoIn_dropdown.show()
                             videoIn_text.show()
                             serial_dropdown.show()
@@ -397,21 +449,24 @@ def main():
                         mouseEnabled = not mouseEnabled
                         mouse_toggle.text= "Enable Mouse" if  mouseEnabled==False else "Disable Mouse"
                         # manager.draw_ui(surface)
-                        
+                        pygame.event.set_grab(not pygame.event.get_grab())
+                        pygame.mouse.set_visible(not pygame.mouse.get_visible())
                         genrateUI()
 
                 if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     # print(event.ui_element)
-                    if event.ui_element == resolution_dropdown:
-                        res=event.text.split('x')
-                        res = list(map(int, res))
-                        if res[0] != scr_size[0] and res[1] != scr_size[1]:
-                            scr_size=tuple(res)
-                            pygame.event.post(pygame.event.Event(pygame.VIDEORESIZE, size=res))
+                    # if event.ui_element == resolution_dropdown:
+                    #     res=event.text.split('x')
+                    #     res = list(map(int, res))
+                    #     if res[0] != scr_size[0] and res[1] != scr_size[1]:
+                    #         scr_size=tuple(res)
+                    #         pygame.event.post(pygame.event.Event(pygame.VIDEORESIZE, size=res))
                     if event.ui_element == videoIn_dropdown:
                         if event.text =='refresh':
-                            pygame.camera.init()
+                            pygame.camera.init(backend="_camera (MSMF)")
                             camlist = pygame.camera.list_cameras()
+                            if camlist == [0]:
+                                camlist = []
                             # print(camlist)
                             # videoIns=list(range(0,len(camlist)))
                             camlist.append('refresh')
@@ -462,7 +517,7 @@ def main():
                     if event.ui_element == keylayout_dropdown:
                         layoutNum=keyLayouts.index(activeKeyLayout)+2
                         if ser.is_open:
-                            ser.write(pack("!BB",0,layoutNum))
+                            ser.write(pack("!BBB", 5, layoutNum, 0)) 
                             activeKeyLayout = event.text
                         # settings_button, resolution_dropdown, resolution_text, videoIn_dropdown, videoIn_text, serial_dropdown, serial_text, keylayout_dropdown, keylayout_text = 
                         genrateUI()
@@ -476,10 +531,13 @@ def main():
         pygame.display.flip()
 
 
-pygame.camera.init()
+print(pygame.camera.get_backends())
+pygame.camera.init(backend="_camera (MSMF)")
 camlist = pygame.camera.list_cameras()
-
+if camlist == [0]:
+        camlist = []
 camlist.append('refresh')
+
 if __name__ == "__main__":
     main()
 
